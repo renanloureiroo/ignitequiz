@@ -1,20 +1,33 @@
-import { useEffect, useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { View, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { HouseLine } from 'phosphor-react-native';
+import { useEffect, useRef, useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import { View, ScrollView, Alert, Pressable } from "react-native";
+import { HouseLine, Trash } from "phosphor-react-native";
 
-import { Header } from '../../components/Header';
-import { HistoryCard, HistoryProps } from '../../components/HistoryCard';
+import { Header } from "../../components/Header";
+import { HistoryCard, HistoryProps } from "../../components/HistoryCard";
 
-import { styles } from './styles';
-import { historyGetAll, historyRemove } from '../../storage/quizHistoryStorage';
-import { Loading } from '../../components/Loading';
+import { styles } from "./styles";
+import { historyGetAll, historyRemove } from "../../storage/quizHistoryStorage";
+import { Loading } from "../../components/Loading";
+import Animated, {
+  FadeInLeft,
+  FadeOutRight,
+  Layout,
+  SlideInLeft,
+  SlideInRight,
+  SlideOutRight,
+} from "react-native-reanimated";
+import { Swipeable } from "react-native-gesture-handler";
+import { THEME } from "../../styles/theme";
 
 export function History() {
   const [isLoading, setIsLoading] = useState(true);
+
   const [history, setHistory] = useState<HistoryProps[]>([]);
 
   const { goBack } = useNavigation();
+
+  const swipeableRef = useRef<Swipeable[]>([]);
 
   async function fetchHistory() {
     const response = await historyGetAll();
@@ -28,18 +41,15 @@ export function History() {
     fetchHistory();
   }
 
-  function handleRemove(id: string) {
-    Alert.alert(
-      'Remover',
-      'Deseja remover esse registro?',
-      [
-        {
-          text: 'Sim', onPress: () => remove(id)
-        },
-        { text: 'Não', style: 'cancel' }
-      ]
-    );
-
+  function handleRemove(id: string, index: number) {
+    swipeableRef.current?.[index].close();
+    Alert.alert("Remover", "Deseja remover esse registro?", [
+      {
+        text: "Sim",
+        onPress: () => remove(id),
+      },
+      { text: "Não", style: "cancel" },
+    ]);
   }
 
   useEffect(() => {
@@ -47,14 +57,14 @@ export function History() {
   }, []);
 
   if (isLoading) {
-    return <Loading />
+    return <Loading />;
   }
 
   return (
     <View style={styles.container}>
       <Header
         title="Histórico"
-        subtitle={`Seu histórico de estudos${'\n'}realizados`}
+        subtitle={`Seu histórico de estudos${"\n"}realizados`}
         icon={HouseLine}
         onPress={goBack}
       />
@@ -63,16 +73,33 @@ export function History() {
         contentContainerStyle={styles.history}
         showsVerticalScrollIndicator={false}
       >
-        {
-          history.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              onPress={() => handleRemove(item.id)}
+        {history.map((item, index) => (
+          <Animated.View
+            key={item.id}
+            entering={SlideInLeft}
+            exiting={SlideOutRight}
+            layout={Layout.springify()}
+          >
+            <Swipeable
+              ref={(ref) => {
+                if (!ref) return;
+                swipeableRef.current.push(ref);
+              }}
+              overshootLeft={false}
+              leftThreshold={40}
+              containerStyle={styles.swipeableContainer}
+              onSwipeableOpen={() => handleRemove(item.id, index)}
+              renderLeftActions={() => (
+                <View style={styles.swipeableRemove}>
+                  <Trash size={32} color={THEME.COLORS.GREY_100} />
+                </View>
+              )}
+              renderRightActions={() => null}
             >
               <HistoryCard data={item} />
-            </TouchableOpacity>
-          ))
-        }
+            </Swipeable>
+          </Animated.View>
+        ))}
       </ScrollView>
     </View>
   );
