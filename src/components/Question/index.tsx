@@ -4,6 +4,8 @@ import Animated, { Keyframe, runOnJS } from "react-native-reanimated";
 import { Option } from "../Option";
 import { styles } from "./styles";
 
+import * as Haptics from "expo-haptics";
+
 type QuestionProps = {
   title: string;
   alternatives: string[];
@@ -69,9 +71,10 @@ export function Question({
           key={index}
           title={alternative}
           checked={alternativeSelected === index}
-          onPress={() =>
-            setAlternativeSelected && setAlternativeSelected(index)
-          }
+          onPress={async () => {
+            await Haptics.selectionAsync();
+            setAlternativeSelected && setAlternativeSelected(index);
+          }}
         />
       ))}
     </Animated.View>

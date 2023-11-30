@@ -9,13 +9,6 @@ import { QuizCard } from "../../components/QuizCard";
 
 import { styles } from "./styles";
 import { QUIZZES } from "../../data/quizzes";
-import Animated, {
-  FlipInYLeft,
-  SlideInDown,
-  SlideInLeft,
-  SlideOutLeft,
-  ZoomOut,
-} from "react-native-reanimated";
 
 export function Home() {
   const [quizzes, setQuizzes] = useState(QUIZZES);
